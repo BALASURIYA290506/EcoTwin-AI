@@ -139,9 +139,9 @@ export default function Dashboard({
 
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-10 -right-40 w-96 h-96 rounded-full bg-brand-primary/[0.06] filter blur-3xl" />
-        <div className="absolute bottom-20 -left-40 w-80 h-80 rounded-full bg-brand-accent/[0.04] filter blur-3xl" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-brand-primary/[0.05] filter blur-3xl opacity-60" />
+        <div className="absolute top-10 -right-40 w-96 h-96 rounded-full bg-brand-primary/6 filter blur-3xl" />
+        <div className="absolute bottom-20 -left-40 w-80 h-80 rounded-full bg-brand-accent/4 filter blur-3xl" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-brand-primary/5 filter blur-3xl opacity-60" />
       </div>
 
       {/* Dashboard Container */}
@@ -156,7 +156,7 @@ export default function Dashboard({
             transition={{ duration: 0.5 }}
           >
             <motion.div
-              className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-primary to-brand-dark flex items-center justify-center glow-soft"
+              className="w-11 h-11 rounded-xl bg-linear-to-br from-brand-primary to-brand-dark flex items-center justify-center glow-soft"
               whileHover={{ scale: 1.08, rotate: -4 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 350, damping: 20 }}
@@ -193,7 +193,7 @@ export default function Dashboard({
             {getGreeting()}, <span className="text-brand-primary">{state.profile.name}</span> 🌱
           </h1>
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="px-4 py-2 bg-gradient-to-r from-brand-light to-brand-primary/10 text-brand-dark rounded-full text-xs font-bold border border-brand-primary/20 backdrop-blur-sm">
+            <span className="px-4 py-2 bg-linear-to-r from-brand-light to-brand-primary/10 text-brand-dark rounded-full text-xs font-bold border border-brand-primary/20 backdrop-blur-sm">
               Level {state.profile.level}
             </span>
             <span className="px-4 py-2 bg-slate-100 text-slate-600 rounded-full text-xs font-bold backdrop-blur-sm">

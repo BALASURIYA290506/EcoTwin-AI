@@ -92,13 +92,14 @@ Choose an area to improve:
                     content: reply,
                 },
             ]);
-        } catch {
+        } catch (error) {
+            console.error(error);
+
             setMessages((prev) => [
                 ...prev,
                 {
                     role: "assistant",
-                    content:
-                        "⚠️ Something went wrong. Please try again.",
+                    content: "⚠️ Something went wrong. Please try again.",
                 },
             ]);
         }
@@ -134,7 +135,7 @@ Choose an area to improve:
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-50 to-white">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-linear-to-b from-slate-50 to-white">
                 {messages.map((msg, index) => (
                     <ChatMessage
                         key={index}
