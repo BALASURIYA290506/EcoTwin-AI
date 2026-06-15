@@ -76,20 +76,24 @@ export default function App() {
   return (
     <div className="w-full min-h-screen bg-brand-bg font-sans selection:bg-brand-light selection:text-brand-dark">
       {view === 'landing' && (
-        <LandingPage onStart={handleStartAssessment} />
+        <main>
+          <LandingPage onStart={handleStartAssessment} />
+        </main>
       )}
 
       {view === 'assessment' && (
-        <AssessmentWizard
-          onComplete={handleCompleteAssessment}
-          onBackToHome={handleReset}
-        />
+        <main>
+          <AssessmentWizard
+            onComplete={handleCompleteAssessment}
+            onBackToHome={handleReset}
+          />
+        </main>
       )}
 
       {view === 'loading' && (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-brand-bg text-center">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-brand-bg text-center" role="status" aria-live="polite" aria-label="Loading carbon footprint calculation">
           <div className="glass rounded-3xl p-10 max-w-md w-full border border-slate-200 shadow-xl flex flex-col items-center">
-            <Loader2 className="w-12 h-12 text-brand-primary animate-spin mb-6" />
+            <Loader2 className="w-12 h-12 text-brand-primary animate-spin mb-6" aria-hidden="true" />
             <h3 className="text-xl font-bold text-slate-800 mb-2">
               Eco Calculations
             </h3>
@@ -111,12 +115,14 @@ export default function App() {
       )}
 
       {view === 'dashboard' && (
-        <Dashboard
-          report={report}
-          onReset={handleReset}
-          isNewAssessment={isNewAssessment}
-          onClearNewAssessment={() => setIsNewAssessment(false)}
-        />
+        <main>
+          <Dashboard
+            report={report}
+            onReset={handleReset}
+            isNewAssessment={isNewAssessment}
+            onClearNewAssessment={() => setIsNewAssessment(false)}
+          />
+        </main>
       )}
       <EcoCoachWidget
         score={report?.currentYou.overallScore ?? 0}

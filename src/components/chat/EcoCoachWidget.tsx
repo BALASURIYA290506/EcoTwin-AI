@@ -27,6 +27,7 @@ export default function EcoCoachWidget({
 
             <button
                 onClick={() => setIsOpen(true)}
+                aria-label="Open EcoCoach chat"
                 className="
           fixed
           bottom-6

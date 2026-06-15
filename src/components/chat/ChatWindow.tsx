@@ -59,7 +59,8 @@ Choose an area to improve:
     async function handleSend() {
         if (!message.trim()) return;
 
-        const userMessage = message;
+        // Sanitize user input
+        const userMessage = message.trim().slice(0, 500);
 
         setMessages((prev) => [
             ...prev,
@@ -75,7 +76,8 @@ Choose an area to improve:
         try {
             const history = messages
                 .map((m) => `${m.role}: ${m.content}`)
-                .join("\n");
+                .join("\n")
+                .slice(0, 2000); // Limit history length
 
             const reply = await askEcoTwinAI(
                 userMessage,
@@ -93,7 +95,7 @@ Choose an area to improve:
                 },
             ]);
         } catch (error) {
-            console.error(error);
+            console.error('Chat error:', error);
 
             setMessages((prev) => [
                 ...prev,
@@ -129,7 +131,7 @@ Choose an area to improve:
                     </p>
                 </div>
 
-                <button onClick={onClose}>
+                <button onClick={onClose} aria-label="Close chat">
                     ✕
                 </button>
             </div>
@@ -170,20 +172,25 @@ Choose an area to improve:
                 <input
                     ref={inputRef}
                     value={message}
-                    onChange={(e) =>
-                        setMessage(e.target.value)
-                    }
+                    onChange={(e) => {
+                        // Limit input length
+                        const newValue = e.target.value.slice(0, 500);
+                        setMessage(newValue);
+                    }}
                     onKeyDown={(e) => {
                         if (e.key === "Enter") {
                             handleSend();
                         }
                     }}
                     placeholder="Type a message..."
+                    aria-label="Type your message to EcoCoach"
+                    maxLength={500}
                     className="flex-1 border border-slate-300 rounded-xl px-3 py-2 outline-none"
                 />
 
                 <button
                     onClick={handleSend}
+                    aria-label="Send message"
                     className="bg-brand-primary text-white px-4 rounded-xl"
                 >
                     ➤

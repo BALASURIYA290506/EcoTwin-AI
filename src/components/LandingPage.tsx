@@ -85,23 +85,24 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
       <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-6 md:px-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-primary to-brand-dark shadow-lg shadow-brand-primary/20">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-primary to-brand-dark shadow-lg shadow-brand-primary/20" aria-hidden="true">
             <Leaf className="h-6 w-6 text-white" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-950">EcoTwin</div>
+            <h1 className="text-2xl font-bold text-slate-950">EcoTwin</h1>
             <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-slate-500">Carbon Footprint Intelligence</div>
           </div>
         </div>
 
         <motion.button
           onClick={onStart}
+          aria-label="Take sustainability assessment"
           className="inline-flex items-center gap-2 rounded-full border border-brand-primary/20 bg-white/70 px-4 py-2 text-xs font-bold text-brand-dark backdrop-blur-xl transition hover-lift"
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
         >
           Take Assessment
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </motion.button>
       </header>
 
@@ -112,21 +113,22 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <Sparkles className="h-4 w-4 text-brand-primary animate-pulse" />
               Track • Understand • Reduce
             </div>
-            <h1 className="max-w-xl text-5xl font-bold leading-[1.03] text-slate-950 md:text-7xl">
+            <h2 className="max-w-xl text-5xl font-bold leading-[1.03] text-slate-950 md:text-7xl">
               Meet Your Future Sustainable Self.
-            </h1>
+            </h2>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
               EcoTwin helps individuals understand, visualize, track, and reduce their carbon footprint through personalized insights and sustainable actions.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <motion.button
                 onClick={onStart}
+                aria-label="Start sustainability assessment"
                 className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-brand-primary to-brand-dark px-6 py-4 text-sm font-bold text-white shadow-lg shadow-brand-primary/20"
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.98 }}
               >
                 Start Assessment
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </motion.button>
               <span className="inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/60 px-5 py-4 text-sm font-semibold text-slate-600 backdrop-blur-xl">
                 <MoveHorizontal className="h-4 w-4 text-brand-primary" />
@@ -250,6 +252,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                     max="100"
                     value={value as number}
                     onChange={(e) => (setter as Dispatch<SetStateAction<number>>)(Number(e.target.value))}
+                    aria-label={`${label as string} slider`}
                     className="h-2 w-full appearance-none rounded-full bg-slate-200 accent-brand-primary"
                   />
                 </label>
@@ -335,6 +338,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 max="100"
                 value={earthMode}
                 onChange={(e) => setEarthMode(Number(e.target.value))}
+                aria-label="Earth sustainability mode slider"
                 className="h-3 w-full appearance-none rounded-full bg-slate-200 accent-brand-primary"
               />
             </label>

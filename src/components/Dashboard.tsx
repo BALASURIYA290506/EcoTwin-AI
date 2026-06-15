@@ -160,23 +160,25 @@ export default function Dashboard({
               whileHover={{ scale: 1.08, rotate: -4 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+              aria-hidden="true"
             >
               <Leaf className="text-white w-6 h-6" />
             </motion.div>
-            <span className="text-2xl md:text-3xl font-bold tracking-tight text-brand-dark">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-brand-dark">
               Eco<span className="text-brand-primary">Twin</span>
-            </span>
+            </h1>
           </motion.div>
 
           <div className="flex items-center gap-3">
 
             <motion.button
               onClick={onReset}
+              aria-label="Start over - retake assessment"
               className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 bg-white/80 backdrop-blur-md rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all duration-300 cursor-pointer hover-lift shadow-sm"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               Start Over
             </motion.button>
           </div>
@@ -189,9 +191,9 @@ export default function Dashboard({
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-9"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-3 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-3 tracking-tight">
             {getGreeting()}, <span className="text-brand-primary">{state.profile.name}</span> 🌱
-          </h1>
+          </h2>
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="px-4 py-2 bg-linear-to-r from-brand-light to-brand-primary/10 text-brand-dark rounded-full text-xs font-bold border border-brand-primary/20 backdrop-blur-sm">
               Level {state.profile.level}

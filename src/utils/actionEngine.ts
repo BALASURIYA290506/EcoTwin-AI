@@ -2,8 +2,14 @@ import type { Category, CompleteCarbonReport } from './carbonEngine';
 import type { DashboardState, MissionCategory } from './dashboardStore';
 import { calculateImpact } from './dashboardStore';
 
+/**
+ * Action tiers representing the impact level of sustainability actions
+ */
 export type ActionTier = 'High Impact' | 'Medium Impact' | 'Quick Win';
 
+/**
+ * Represents a sustainability action with its metadata
+ */
 export interface EcoAction {
   tier: ActionTier;
   title: string;
@@ -15,6 +21,9 @@ export interface EcoAction {
   category: Category | MissionCategory;
 }
 
+/**
+ * Represents a day in a weekly sustainability plan
+ */
 export interface WeeklyPlanDay {
   day: string;
   mission: string;
@@ -22,6 +31,9 @@ export interface WeeklyPlanDay {
   category: Category | MissionCategory;
 }
 
+/**
+ * Represents a sustainability challenge with progress tracking
+ */
 export interface EcoChallenge {
   title: string;
   duration: string;
@@ -32,6 +44,9 @@ export interface EcoChallenge {
   growth: string;
 }
 
+/**
+ * Represents an insight into improvement opportunities
+ */
 export interface OpportunityInsight {
   category: Category;
   title: string;
@@ -41,6 +56,9 @@ export interface OpportunityInsight {
   explanation: string;
 }
 
+/**
+ * Category-specific copy for sustainability recommendations
+ */
 const CATEGORY_COPY: Record<Category, { title: string; monthlySavings: number; action: string }> = {
   transport: {
     title: 'Transportation',
@@ -76,6 +94,11 @@ const CATEGORY_COPY: Record<Category, { title: string; monthlySavings: number; a
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+/**
+ * Returns health status based on health score
+ * @param health - Health score (0-100)
+ * @returns Health status object with label, emoji, and tone
+ */
 export function getHealthStatus(health: number) {
   if (health >= 90) return { label: 'Thriving', emoji: '🌲', tone: 'text-brand-dark' };
   if (health >= 70) return { label: 'Healthy', emoji: '🌳', tone: 'text-emerald-700' };
@@ -84,6 +107,11 @@ export function getHealthStatus(health: number) {
   return { label: 'Needs Care', emoji: '🌱', tone: 'text-orange-700' };
 }
 
+/**
+ * Calculates overall EcoTwin health score based on dashboard state
+ * @param state - Current dashboard state
+ * @returns Health score (0-100)
+ */
 export function calculateEcoTwinHealth(state: DashboardState): number {
   const completedToday = state.dailyMissions.filter((mission) => mission.completed).length;
   const missionRate = state.dailyMissions.length > 0 ? completedToday / state.dailyMissions.length : 0;

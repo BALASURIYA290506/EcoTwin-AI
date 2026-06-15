@@ -212,15 +212,28 @@ export function loadDashboardState(carbonScore?: number, potentialScore?: number
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as DashboardState;
+      
+      // Validate parsed data structure
+      if (!parsed || !parsed.profile || !parsed.stats) {
+        throw new Error('Invalid dashboard state structure');
+      }
+
       // Ensure avatar stage is synced with level
       const stageConfig = getAvatarStageForLevel(parsed.profile.level);
       parsed.profile.avatarStage = stageConfig.stage;
-      // Override scores if provided from report
-      if (carbonScore !== undefined) parsed.profile.carbonScore = carbonScore;
-      if (potentialScore !== undefined) parsed.profile.potentialScore = potentialScore;
+      
+      // Validate and sanitize scores
+      if (carbonScore !== undefined && typeof carbonScore === 'number' && carbonScore >= 0 && carbonScore <= 100) {
+        parsed.profile.carbonScore = carbonScore;
+      }
+      if (potentialScore !== undefined && typeof potentialScore === 'number' && potentialScore >= 0 && potentialScore <= 100) {
+        parsed.profile.potentialScore = potentialScore;
+      }
+      
       return parsed;
     }
-  } catch {
+  } catch (error) {
+    console.error('Error loading dashboard state:', error);
     // Corrupt data — reset
   }
   return createDefaultState(carbonScore, potentialScore);
@@ -228,8 +241,35 @@ export function loadDashboardState(carbonScore?: number, potentialScore?: number
 
 export function saveDashboardState(state: DashboardState): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
+    // Validate state before saving
+    if (!state || !state.profile || !state.stats) {
+      throw new Error('Invalid dashboard state');
+    }
+
+    // Sanitize data to prevent storage issues
+    const sanitizedState: DashboardState = {
+      ...state,
+      profile: {
+        ...state.profile,
+        name: String(state.profile.name).slice(0, 50), // Limit name length
+        carbonScore: Math.max(0, Math.min(100, Number(state.profile.carbonScore) || 0)),
+        potentialScore: Math.max(0, Math.min(100, Number(state.profile.potentialScore) || 0)),
+        level: Math.max(1, Math.floor(Number(state.profile.level) || 1)),
+        xp: Math.max(0, Math.floor(Number(state.profile.xp) || 0)),
+      },
+      stats: {
+        ...state.stats,
+        missionsCompleted: Math.max(0, Math.floor(Number(state.stats.missionsCompleted) || 0)),
+        currentStreak: Math.max(0, Math.floor(Number(state.stats.currentStreak) || 0)),
+        totalCO2Saved: Math.max(0, Number(state.stats.totalCO2Saved) || 0),
+        totalXP: Math.max(0, Math.floor(Number(state.stats.totalXP) || 0)),
+        carbonImprovement: Math.max(0, Math.min(100, Number(state.stats.carbonImprovement) || 0)),
+      }
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedState));
+  } catch (error) {
+    console.error('Error saving dashboard state:', error);
     // Storage full or unavailable — silently fail
   }
 }

@@ -27,9 +27,9 @@ Analyze lifestyle habits across:
 - Energy Usage
 - Food Consumption
 - Waste Management
-- Water Usage
+- Shopping Habits
 
-Generate a personalized sustainability score.
+Generate a personalized sustainability score with category breakdowns.
 
 ### 🤖 EcoCoach AI
 An AI-powered sustainability mentor that:
@@ -40,10 +40,10 @@ An AI-powered sustainability mentor that:
 - Guides users step-by-step
 
 ### 🎯 Daily Missions
-Complete sustainability challenges and earn rewards.
+Complete sustainability challenges and earn XP rewards.
 
 ### 🌱 EcoTwin Growth System
-Grow your EcoTwin through different stages as you improve your sustainability score.
+Grow your EcoTwin through different stages (Seed → Guardian) as you improve your sustainability score.
 
 ### 🏆 Achievements & XP
 Unlock achievements and track progress through a gamified experience.
@@ -55,25 +55,161 @@ Monitor:
 - XP Progress
 - Carbon Improvement
 - Mission Completion
+- Environmental Impact Metrics
 
 ---
 
 ## 🛠 Tech Stack
 
 **Frontend**
-- React
+- React 19
 - TypeScript
 - Vite
 
 **UI & Styling**
 - Tailwind CSS v4
 - Framer Motion
+- Lucide React Icons
 
 **AI**
 - Google Gemini API
 
+**Testing**
+- Vitest
+- React Testing Library
+- jest-dom
+
 **Development**
-- Antigravity IDE
+- ESLint
+- TypeScript ESLint
+
+---
+
+## 🏗 Architecture
+
+### Project Structure
+```
+src/
+├── components/
+│   ├── chat/              # AI chatbot components
+│   ├── dashboard/         # Dashboard UI components
+│   ├── AssessmentWizard.tsx
+│   ├── Dashboard.tsx
+│   └── LandingPage.tsx
+├── utils/
+│   ├── carbonEngine.ts    # Carbon calculation logic
+│   ├── dashboardStore.ts  # State management & persistence
+│   ├── actionEngine.ts    # Action planning & insights
+│   └── gemini.ts          # AI integration
+└── test/                  # Test files
+```
+
+### Key Design Patterns
+- **Component-based architecture** with React hooks for state management
+- **LocalStorage persistence** for dashboard state
+- **Type-safe TypeScript** throughout the application
+- **Modular utility functions** for business logic separation
+
+---
+
+## 🧪 Testing
+
+The project includes comprehensive test coverage using Vitest and React Testing Library.
+
+### Test Coverage
+- Component rendering tests
+- User interaction tests
+- State management tests
+- Utility function tests
+- Score calculation tests
+
+### Running Tests
+```bash
+npm test              # Run tests in watch mode
+npm run test:run      # Run tests once
+npm run test:ui       # Run tests with UI
+```
+
+### Test Files
+- `App.test.tsx` - Main application flow tests
+- `AssessmentWizard.test.tsx` - Assessment component tests
+- `carbonEngine.test.tsx` - Carbon calculation logic tests
+- `dashboardStore.test.tsx` - State management tests
+- `EcoCoachWidget.test.tsx` - Chat widget tests
+
+---
+
+## ♿ Accessibility
+
+EcoTwin is built with accessibility in mind:
+
+- **Semantic HTML** with proper heading hierarchy
+- **ARIA labels** on all interactive elements
+- **Keyboard navigation** support
+- **Screen reader friendly** with live regions for dynamic content
+- **Focus management** for modal dialogs
+- **Color contrast** meeting WCAG standards
+
+### Accessibility Features
+- `aria-label` on icon-only buttons
+- `aria-live` regions for dynamic updates
+- `role="progressbar"` with proper ARIA attributes
+- Semantic `<main>` and `<header>` landmarks
+- Proper form labels and associations
+
+---
+
+## 🔒 Security
+
+Security best practices implemented:
+
+- **Input validation** on all user inputs
+- **Data sanitization** before storage
+- **API key validation** with fallback handling
+- **Error handling** with user-friendly messages
+- **LocalStorage validation** to prevent data corruption
+- **Length limiting** on text inputs to prevent abuse
+
+### Security Measures
+- Chat input limited to 500 characters
+- Conversation history limited to 2000 characters
+- AI response length limiting
+- Score validation (0-100 range enforcement)
+- Type checking on all external data
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+```bash
+npm install
+```
+
+### Development
+```bash
+npm run dev
+```
+
+### Build
+```bash
+npm run build
+```
+
+### Preview
+```bash
+npm run preview
+```
+
+### Environment Variables
+Create a `.env` file in the root directory:
+```
+VITE_GEMINI_API_KEY=your_api_key_here
+```
 
 ---
 
@@ -98,6 +234,12 @@ Unlike traditional carbon calculators, EcoTwin combines:
 ✅ Gamified Progress Tracking
 
 ✅ Sustainability Education
+
+✅ Comprehensive Testing
+
+✅ Accessibility-First Design
+
+✅ Security Best Practices
 
 in one interactive platform.
 

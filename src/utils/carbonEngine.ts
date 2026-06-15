@@ -1,3 +1,6 @@
+/**
+ * Represents an answer option for a sustainability question
+ */
 export interface Option {
   id: string;
   text: string;
@@ -7,8 +10,14 @@ export interface Option {
   twinBenefit: string; // Benefit text if upgraded
 }
 
+/**
+ * Sustainability assessment categories
+ */
 export type Category = 'transport' | 'energy' | 'food' | 'shopping' | 'waste' | 'lifestyle';
 
+/**
+ * Represents a question in the sustainability assessment
+ */
 export interface Question {
   id: string;
   category: Category;
@@ -72,6 +81,9 @@ export const QUESTIONS: Question[] = [
   }
 ];
 
+/**
+ * Report containing current carbon footprint analysis
+ */
 export interface ScoreReport {
   overallScore: number;
   categoryBreakdown: Record<Category, number>;
@@ -80,6 +92,9 @@ export interface ScoreReport {
   weaknesses: string[];
 }
 
+/**
+ * Report containing future EcoTwin potential analysis
+ */
 export interface EcoTwinReport {
   potentialScore: number;
   annualCO2Kg: number;
@@ -96,6 +111,9 @@ export interface EcoTwinReport {
   costSavingsUSD: number;
 }
 
+/**
+ * Complete carbon footprint report with current and future analysis
+ */
 export interface CompleteCarbonReport {
   currentYou: ScoreReport;
   futureEcoTwin: EcoTwinReport;
@@ -111,6 +129,9 @@ const MAX_CATEGORY_EMISSIONS: Record<Category, number> = {
   lifestyle: 1 // default placeholder
 };
 
+/**
+ * Category weights for overall score calculation
+ */
 const CATEGORY_WEIGHTS: Record<Category, number> = {
   transport: 0.30,
   energy: 0.25,
@@ -120,7 +141,18 @@ const CATEGORY_WEIGHTS: Record<Category, number> = {
   lifestyle: 0.00
 };
 
+/**
+ * Calculates complete carbon footprint report from assessment answers
+ * @param answers - Record of question IDs to selected option IDs
+ * @returns Complete carbon report with current and future analysis
+ */
 export function calculateCarbonReport(answers: Record<string, string>): CompleteCarbonReport {
+  // Validate input
+  if (!answers || typeof answers !== 'object') {
+    console.error('Invalid answers input');
+    answers = {};
+  }
+
   // 1. Calculate Current Emissions and Scores
   const categoryEmissions: Record<Category, number> = {
     transport: 0,
@@ -133,12 +165,21 @@ export function calculateCarbonReport(answers: Record<string, string>): Complete
 
   const currentSelectionTexts: Record<string, string> = {};
 
-  // Map answers
+  // Map answers with validation
   QUESTIONS.forEach(q => {
     const selectedOptionId = answers[q.id];
+    
+    // Validate option ID
+    if (!selectedOptionId || typeof selectedOptionId !== 'string') {
+      console.warn(`Invalid option ID for question ${q.id}, using default`);
+    }
+
     const option = q.options.find(o => o.id === selectedOptionId) || q.options[0];
-    categoryEmissions[q.category] += option.co2e;
-    currentSelectionTexts[q.id] = option.text;
+    
+    // Validate CO2e value
+    const co2e = typeof option.co2e === 'number' && option.co2e >= 0 ? option.co2e : 0;
+    categoryEmissions[q.category] += co2e;
+    currentSelectionTexts[q.id] = String(option.text || '').slice(0, 100);
   });
 
   // Calculate category scores (0 - 100)
