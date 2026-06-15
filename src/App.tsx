@@ -82,7 +82,7 @@ export default function App() {
       )}
 
       {view === 'assessment' && (
-        <main>
+        <main id="main-content">
           <AssessmentWizard
             onComplete={handleCompleteAssessment}
             onBackToHome={handleReset}
@@ -91,7 +91,7 @@ export default function App() {
       )}
 
       {view === 'loading' && (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-brand-bg text-center" role="status" aria-live="polite" aria-label="Loading carbon footprint calculation">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-brand-bg text-center" role="status" aria-live="polite" aria-label="Loading carbon footprint calculation" id="main-content">
           <div className="glass rounded-3xl p-10 max-w-md w-full border border-slate-200 shadow-xl flex flex-col items-center">
             <Loader2 className="w-12 h-12 text-brand-primary animate-spin mb-6" aria-hidden="true" />
             <h3 className="text-xl font-bold text-slate-800 mb-2">
@@ -115,7 +115,7 @@ export default function App() {
       )}
 
       {view === 'dashboard' && (
-        <main>
+        <main id="main-content">
           <Dashboard
             report={report}
             onReset={handleReset}
