@@ -92,7 +92,27 @@ const CATEGORY_COPY: Record<Category, { title: string; monthlySavings: number; a
   },
 };
 
+/**
+ * Constants for health score calculations
+ */
+const HEALTH_SCORE_WEIGHT_CARBON = 0.45;
+const HEALTH_SCORE_WEIGHT_IMPROVEMENT = 0.35;
+const HEALTH_MISSION_RATE_MULTIPLIER = 24;
+const HEALTH_STREAK_MULTIPLIER = 2;
+const HEALTH_STREAK_MAX_BONUS = 12;
+const HEALTH_WEEKLY_MISS_PENALTY = 3;
+
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+/**
+ * Health status thresholds
+ */
+const HEALTH_THRESHOLDS = {
+  THRIVING: 90,
+  HEALTHY: 70,
+  GROWING: 50,
+  WEAK: 30,
+} as const;
 
 /**
  * Returns health status based on health score
@@ -100,10 +120,12 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
  * @returns Health status object with label, emoji, and tone
  */
 export function getHealthStatus(health: number) {
-  if (health >= 90) return { label: 'Thriving', emoji: '🌲', tone: 'text-brand-dark' };
-  if (health >= 70) return { label: 'Healthy', emoji: '🌳', tone: 'text-emerald-700' };
-  if (health >= 50) return { label: 'Growing', emoji: '🍀', tone: 'text-lime-700' };
-  if (health >= 30) return { label: 'Weak', emoji: '🌿', tone: 'text-amber-700' };
+  const validatedHealth = Math.max(0, Math.min(100, Number(health) || 0));
+  
+  if (validatedHealth >= HEALTH_THRESHOLDS.THRIVING) return { label: 'Thriving', emoji: '🌲', tone: 'text-brand-dark' };
+  if (validatedHealth >= HEALTH_THRESHOLDS.HEALTHY) return { label: 'Healthy', emoji: '🌳', tone: 'text-emerald-700' };
+  if (validatedHealth >= HEALTH_THRESHOLDS.GROWING) return { label: 'Growing', emoji: '🍀', tone: 'text-lime-700' };
+  if (validatedHealth >= HEALTH_THRESHOLDS.WEAK) return { label: 'Weak', emoji: '🌿', tone: 'text-amber-700' };
   return { label: 'Needs Care', emoji: '🌱', tone: 'text-orange-700' };
 }
 
@@ -113,29 +135,63 @@ export function getHealthStatus(health: number) {
  * @returns Health score (0-100)
  */
 export function calculateEcoTwinHealth(state: DashboardState): number {
+  // Validate state
+  if (!state || !state.profile || !state.stats || !state.dailyMissions) {
+    return 0;
+  }
+
   const completedToday = state.dailyMissions.filter((mission) => mission.completed).length;
   const missionRate = state.dailyMissions.length > 0 ? completedToday / state.dailyMissions.length : 0;
   const weeklyMisses = state.stats.weeklyProgress.filter((value) => value === 0).length;
-  const scoreBase = state.profile.carbonScore * 0.45 + state.stats.carbonImprovement * 0.35;
-  const careBonus = missionRate * 24 + Math.min(12, state.stats.currentStreak * 2);
-  const missedPenalty = weeklyMisses * 3;
+  const scoreBase = state.profile.carbonScore * HEALTH_SCORE_WEIGHT_CARBON + state.stats.carbonImprovement * HEALTH_SCORE_WEIGHT_IMPROVEMENT;
+  const careBonus = missionRate * HEALTH_MISSION_RATE_MULTIPLIER + Math.min(HEALTH_STREAK_MAX_BONUS, state.stats.currentStreak * HEALTH_STREAK_MULTIPLIER);
+  const missedPenalty = weeklyMisses * HEALTH_WEEKLY_MISS_PENALTY;
 
   return Math.max(0, Math.min(100, Math.round(scoreBase + careBonus - missedPenalty)));
 }
 
+/**
+ * Calculates the percentage of sustainability potential recovered
+ * @param currentScore - Current sustainability score (0-100)
+ * @param potentialScore - Potential sustainability score (0-100)
+ * @returns Percentage recovered (0-100)
+ */
 export function calculatePotentialRecovered(currentScore: number, potentialScore: number): number {
-  if (potentialScore <= currentScore) return 100;
-  return Math.max(0, Math.min(100, Math.round((currentScore / potentialScore) * 100)));
+  const validatedCurrent = Math.max(0, Math.min(100, Number(currentScore) || 0));
+  const validatedPotential = Math.max(0, Math.min(100, Number(potentialScore) || 0));
+  
+  if (validatedPotential <= validatedCurrent) return 100;
+  return Math.max(0, Math.min(100, Math.round((validatedCurrent / validatedPotential) * 100)));
 }
 
+/**
+ * Constants for opportunity insight calculations
+ */
+const MIN_GAIN_THRESHOLD = 6;
+const GAIN_DIVISOR = 3;
+const MIN_CO2_REDUCTION = 18;
+const CO2_MULTIPLIER = 3.1;
+
 export function getOpportunityInsight(report: CompleteCarbonReport | null, state: DashboardState): OpportunityInsight {
+  // Validate inputs
+  if (!state || !state.profile) {
+    return {
+      category: 'energy',
+      title: CATEGORY_COPY.energy.title,
+      gain: MIN_GAIN_THRESHOLD,
+      co2Reduction: MIN_CO2_REDUCTION,
+      savings: CATEGORY_COPY.energy.monthlySavings,
+      explanation: CATEGORY_COPY.energy.action,
+    };
+  }
+
   const breakdown = report?.currentYou.categoryBreakdown;
   const weakestCategory = breakdown
     ? (Object.entries(breakdown).sort((a, b) => a[1] - b[1])[0][0] as Category)
     : 'energy';
   const score = breakdown?.[weakestCategory] ?? state.profile.carbonScore;
-  const gain = Math.max(6, Math.round((100 - score) / 3));
-  const co2Reduction = Math.max(18, Math.round(gain * 3.1));
+  const gain = Math.max(MIN_GAIN_THRESHOLD, Math.round((100 - score) / GAIN_DIVISOR));
+  const co2Reduction = Math.max(MIN_CO2_REDUCTION, Math.round(gain * CO2_MULTIPLIER));
   const copy = CATEGORY_COPY[weakestCategory];
 
   return {
@@ -259,13 +315,19 @@ export function generateFutureLetter(report: CompleteCarbonReport | null, state:
   ].join('\n\n');
 }
 
+/**
+ * Constants for impact story calculations
+ */
+const LAPTOP_HOURS_PER_KWH = 15;
+const APARTMENT_DAYS_PER_KWH = 9;
+
 export function getImpactStories(totalCO2Saved: number) {
   const impact = calculateImpact(totalCO2Saved);
 
   return [
     { label: 'Trees', value: `${impact.treesEquivalent || 1}`, story: 'mature trees absorbing carbon for a year' },
-    { label: 'Laptop Power', value: `${Math.max(1, Math.round(impact.energySavedKwh * 15))}h`, story: 'of laptop use powered by saved energy' },
+    { label: 'Laptop Power', value: `${Math.max(1, Math.round(impact.energySavedKwh * LAPTOP_HOURS_PER_KWH))}h`, story: 'of laptop use powered by saved energy' },
     { label: 'Driving Avoided', value: `${Math.round(impact.drivingKmAvoided)}km`, story: 'of average car travel avoided' },
-    { label: 'Apartment Energy', value: `${Math.max(1, Math.round(impact.energySavedKwh / 9))} days`, story: 'of energy for a small apartment' },
+    { label: 'Apartment Energy', value: `${Math.max(1, Math.round(impact.energySavedKwh / APARTMENT_DAYS_PER_KWH))} days`, story: 'of energy for a small apartment' },
   ];
 }

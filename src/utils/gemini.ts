@@ -17,7 +17,13 @@ export async function askEcoTwinAI(
     score: number,
     level: number,
     stage: string,
-    history: string
+    history: string,
+    behaviorChangeContext?: {
+        currentMilestone?: string;
+        weeklyGoals?: string[];
+        annualProjection?: string;
+        recommendations?: string[];
+    }
 ) {
     // Input validation
     if (!userMessage || typeof userMessage !== 'string') {
@@ -43,7 +49,13 @@ User EcoTwin Profile:
 Carbon Score: ${score}
 Level: ${level}
 Avatar Stage: ${stage}
-
+${behaviorChangeContext ? `
+Behavior Change Journey:
+Current Milestone: ${behaviorChangeContext.currentMilestone || 'Not started'}
+Weekly Goals: ${behaviorChangeContext.weeklyGoals?.join(', ') || 'Not set'}
+Annual Projection: ${behaviorChangeContext.annualProjection || 'Not calculated'}
+Personalized Recommendations: ${behaviorChangeContext.recommendations?.join('; ') || 'Not available'}
+` : ''}
 Conversation History:
 ${history}
 
@@ -61,6 +73,7 @@ Rules:
 - Give practical suggestions.
 - Remember previous messages.
 - Help user improve EcoTwin score.
+- Reference their behavior change goals when relevant.
 - Sound like ChatGPT/WhatsApp style chatting.
 `;
 

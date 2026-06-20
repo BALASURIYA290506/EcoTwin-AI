@@ -5,12 +5,19 @@ interface EcoCoachWidgetProps {
     score: number;
     level: number;
     stage: string;
+    behaviorChangeContext?: {
+        currentMilestone?: string;
+        weeklyGoals?: string[];
+        annualProjection?: string;
+        recommendations?: string[];
+    };
 }
 
 export default function EcoCoachWidget({
     score,
     level,
     stage,
+    behaviorChangeContext,
 }: EcoCoachWidgetProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -22,6 +29,7 @@ export default function EcoCoachWidget({
                     score={score}
                     level={level}
                     stage={stage}
+                    behaviorChangeContext={behaviorChangeContext}
                 />
             )}
 

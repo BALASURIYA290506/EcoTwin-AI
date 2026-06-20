@@ -9,6 +9,12 @@ interface ChatWindowProps {
     score: number;
     level: number;
     stage: string;
+    behaviorChangeContext?: {
+        currentMilestone?: string;
+        weeklyGoals?: string[];
+        annualProjection?: string;
+        recommendations?: string[];
+    };
 }
 
 export default function ChatWindow({
@@ -16,6 +22,7 @@ export default function ChatWindow({
     score,
     level,
     stage,
+    behaviorChangeContext,
 }: ChatWindowProps) {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -84,7 +91,8 @@ Choose an area to improve:
                 score,
                 level,
                 stage,
-                history
+                history,
+                behaviorChangeContext
             );
 
             setMessages((prev) => [

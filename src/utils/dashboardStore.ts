@@ -25,6 +25,7 @@ export interface UserStats {
   totalXP: number;
   weeklyProgress: number[];  // missions completed per day (last 7 days)
   carbonImprovement: number; // percentage
+  weeklyGoalsCompleted: number; // eco goals completed this week
 }
 
 export interface Mission {
@@ -122,15 +123,25 @@ export const AVATAR_STAGES: AvatarStageConfig[] = [
 
 // ── XP System ────────────────────────────────────────────
 
+/**
+ * Constants for XP system calculations
+ */
+const XP_BASE_MULTIPLIER = 100;
+const XP_LEVEL_EXPONENT = 1.5;
+
 export function xpRequiredForLevel(level: number): number {
-  return Math.round(100 * Math.pow(level, 1.5));
+  const validatedLevel = Math.max(1, Math.floor(Number(level) || 1));
+  return Math.round(XP_BASE_MULTIPLIER * Math.pow(validatedLevel, XP_LEVEL_EXPONENT));
 }
 
 export function getAvatarStageForLevel(level: number): AvatarStageConfig {
+  // Validate input
+  const validatedLevel = Math.max(1, Math.floor(Number(level) || 1));
+  
   // Return the highest stage the user qualifies for
   let result = AVATAR_STAGES[0];
   for (const stage of AVATAR_STAGES) {
-    if (level >= stage.minLevel) {
+    if (validatedLevel >= stage.minLevel) {
       result = stage;
     }
   }
@@ -154,15 +165,22 @@ const MISSION_POOL: Omit<Mission, 'completed'>[] = [
   { id: 'm12', title: 'Take a Shorter Shower', description: 'Reduce your shower time by 2 minutes and save water.', xpReward: 25, category: 'water', icon: '🚿' },
 ];
 
+/**
+ * Constants for mission selection
+ */
+const DAILY_MISSION_COUNT = 3;
+const HASH_MULTIPLIER = 31;
+const HASH_MODULUS = 100;
+
 export function getDailyMissions(seed?: number): Mission[] {
   // Pick 3 missions deterministically based on date (or seed)
   const today = seed ?? new Date().getDate();
   const shuffled = [...MISSION_POOL].sort((a, b) => {
-    const hashA = (a.id.charCodeAt(1) * 31 + today) % 100;
-    const hashB = (b.id.charCodeAt(1) * 31 + today) % 100;
+    const hashA = (a.id.charCodeAt(1) * HASH_MULTIPLIER + today) % HASH_MODULUS;
+    const hashB = (b.id.charCodeAt(1) * HASH_MULTIPLIER + today) % HASH_MODULUS;
     return hashA - hashB;
   });
-  return shuffled.slice(0, 3).map(m => ({ ...m, completed: false }));
+  return shuffled.slice(0, DAILY_MISSION_COUNT).map(m => ({ ...m, completed: false }));
 }
 
 // ── Achievements ─────────────────────────────────────────
@@ -197,6 +215,7 @@ export function createDefaultState(carbonScore?: number, potentialScore?: number
       totalXP: 220,
       weeklyProgress: [2, 3, 1, 0, 3, 2, 0],
       carbonImprovement: 12,
+      weeklyGoalsCompleted: 0,
     },
     dailyMissions: getDailyMissions(),
     achievements: [...DEFAULT_ACHIEVEMENTS],
@@ -206,6 +225,10 @@ export function createDefaultState(carbonScore?: number, potentialScore?: number
 // ── LocalStorage Persistence ─────────────────────────────
 
 const STORAGE_KEY = 'ecotwin_dashboard_v1';
+const MAX_NAME_LENGTH = 50;
+const MIN_LEVEL = 1;
+const MIN_SCORE = 0;
+const MAX_SCORE = 100;
 
 export function loadDashboardState(carbonScore?: number, potentialScore?: number): DashboardState {
   try {
@@ -223,10 +246,10 @@ export function loadDashboardState(carbonScore?: number, potentialScore?: number
       parsed.profile.avatarStage = stageConfig.stage;
       
       // Validate and sanitize scores
-      if (carbonScore !== undefined && typeof carbonScore === 'number' && carbonScore >= 0 && carbonScore <= 100) {
+      if (carbonScore !== undefined && typeof carbonScore === 'number' && carbonScore >= MIN_SCORE && carbonScore <= MAX_SCORE) {
         parsed.profile.carbonScore = carbonScore;
       }
-      if (potentialScore !== undefined && typeof potentialScore === 'number' && potentialScore >= 0 && potentialScore <= 100) {
+      if (potentialScore !== undefined && typeof potentialScore === 'number' && potentialScore >= MIN_SCORE && potentialScore <= MAX_SCORE) {
         parsed.profile.potentialScore = potentialScore;
       }
       
@@ -251,10 +274,10 @@ export function saveDashboardState(state: DashboardState): void {
       ...state,
       profile: {
         ...state.profile,
-        name: String(state.profile.name).slice(0, 50), // Limit name length
-        carbonScore: Math.max(0, Math.min(100, Number(state.profile.carbonScore) || 0)),
-        potentialScore: Math.max(0, Math.min(100, Number(state.profile.potentialScore) || 0)),
-        level: Math.max(1, Math.floor(Number(state.profile.level) || 1)),
+        name: String(state.profile.name).slice(0, MAX_NAME_LENGTH),
+        carbonScore: Math.max(MIN_SCORE, Math.min(MAX_SCORE, Number(state.profile.carbonScore) || 0)),
+        potentialScore: Math.max(MIN_SCORE, Math.min(MAX_SCORE, Number(state.profile.potentialScore) || 0)),
+        level: Math.max(MIN_LEVEL, Math.floor(Number(state.profile.level) || MIN_LEVEL)),
         xp: Math.max(0, Math.floor(Number(state.profile.xp) || 0)),
       },
       stats: {
@@ -263,7 +286,8 @@ export function saveDashboardState(state: DashboardState): void {
         currentStreak: Math.max(0, Math.floor(Number(state.stats.currentStreak) || 0)),
         totalCO2Saved: Math.max(0, Number(state.stats.totalCO2Saved) || 0),
         totalXP: Math.max(0, Math.floor(Number(state.stats.totalXP) || 0)),
-        carbonImprovement: Math.max(0, Math.min(100, Number(state.stats.carbonImprovement) || 0)),
+        carbonImprovement: Math.max(MIN_SCORE, Math.min(MAX_SCORE, Number(state.stats.carbonImprovement) || 0)),
+        weeklyGoalsCompleted: Math.max(0, Math.floor(Number(state.stats.weeklyGoalsCompleted) || 0)),
       }
     };
 
@@ -286,9 +310,14 @@ export interface XPAwardResult {
 }
 
 export function awardXP(currentXP: number, currentLevel: number, xpAmount: number): XPAwardResult {
-  const previousStage = getAvatarStageForLevel(currentLevel);
-  let xp = currentXP + xpAmount;
-  let level = currentLevel;
+  // Validate inputs
+  const validatedXP = Math.max(0, Math.floor(Number(currentXP) || 0));
+  const validatedLevel = Math.max(1, Math.floor(Number(currentLevel) || 1));
+  const validatedAmount = Math.max(0, Math.floor(Number(xpAmount) || 0));
+
+  const previousStage = getAvatarStageForLevel(validatedLevel);
+  let xp = validatedXP + validatedAmount;
+  let level = validatedLevel;
   let leveledUp = false;
 
   // Check for level ups (can multi-level)
@@ -313,6 +342,13 @@ export function awardXP(currentXP: number, currentLevel: number, xpAmount: numbe
 
 // ── Environmental Impact Calculations ────────────────────
 
+/**
+ * Constants for environmental impact calculations
+ */
+const CO2_PER_TREE_KG_YEAR = 22; // Average CO2 absorbed by one tree per year
+const CO2_PER_KM_DRIVING_KG = 0.21; // Average CO2 per km for driving
+const CO2_PER_KWH_GRID_KG = 0.42; // Average CO2 per kWh from grid
+
 export interface EnvironmentalImpact {
   co2SavedKg: number;
   treesEquivalent: number;
@@ -321,10 +357,12 @@ export interface EnvironmentalImpact {
 }
 
 export function calculateImpact(totalCO2SavedKg: number): EnvironmentalImpact {
+  const validatedCO2 = Math.max(0, Number(totalCO2SavedKg) || 0);
+  
   return {
-    co2SavedKg: totalCO2SavedKg,
-    treesEquivalent: Math.round(totalCO2SavedKg / 22),          // 1 tree ≈ 22kg CO₂/year
-    drivingKmAvoided: Math.round(totalCO2SavedKg / 0.21 * 10) / 10, // avg car ≈ 0.21 kg/km
-    energySavedKwh: Math.round(totalCO2SavedKg / 0.42 * 10) / 10,   // avg grid ≈ 0.42 kg/kWh
+    co2SavedKg: validatedCO2,
+    treesEquivalent: Math.round(validatedCO2 / CO2_PER_TREE_KG_YEAR),
+    drivingKmAvoided: Math.round((validatedCO2 / CO2_PER_KM_DRIVING_KG) * 10) / 10,
+    energySavedKwh: Math.round((validatedCO2 / CO2_PER_KWH_GRID_KG) * 10) / 10,
   };
 }

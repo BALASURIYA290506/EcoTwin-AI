@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Leaf, RotateCcw } from 'lucide-react';
+import { Leaf, RotateCcw, Target } from 'lucide-react';
 import type { CompleteCarbonReport } from '../utils/carbonEngine';
 import {
   loadDashboardState,
@@ -8,6 +8,12 @@ import {
   awardXP,
   getAvatarStageForLevel,
 } from '../utils/dashboardStore';
+import {
+  generateCarbonRoadmap,
+  generateWeeklyEcoGoals,
+  projectAnnualImpact,
+  getBehaviorChangeRecommendations,
+} from '../utils/behaviorChange';
 import type { DashboardState, AvatarStageConfig } from '../utils/dashboardStore';
 import HeroProfile from './dashboard/ui/HeroProfile';
 import DailyMissions from './dashboard/DailyMissions';
@@ -18,6 +24,8 @@ import FutureEarthSimulator from './dashboard/FutureEarthSimulator';
 import AchievementPreview from './dashboard/AchievementPreview';
 import EcoTwinJourneyTimeline from './dashboard/EcoTwinJourneyTimeline';
 import FutureSelfModal from './dashboard/FutureSelfModal';
+import EcoCoachWidget from './chat/EcoCoachWidget';
+import BehaviorChangeInsights from './dashboard/BehaviorChangeInsights';
 
 interface DashboardProps {
   report: CompleteCarbonReport | null;
@@ -50,6 +58,13 @@ export default function Dashboard({
     newStage: AvatarStageConfig;
     newLevel: number;
     xpEarned: number;
+  } | null>(null);
+
+  // Milestone celebration state
+  const [milestoneModal, setMilestoneModal] = useState<{
+    isOpen: boolean;
+    milestoneLevel: number;
+    co2Reduction: number;
   } | null>(null);
 
   const handleCompleteMission = useCallback((missionId: string) => {
@@ -110,7 +125,71 @@ export default function Dashboard({
     });
   }, []);
 
+  const handleWeeklyGoalComplete = useCallback((_goalId: string, xpReward: number) => {
+    setState(prev => {
+      const result = awardXP(prev.profile.xp, prev.profile.level, xpReward);
+      const newWeeklyGoalsCompleted = prev.stats.weeklyGoalsCompleted + 1;
+
+      const newState: DashboardState = {
+        ...prev,
+        profile: {
+          ...prev.profile,
+          xp: result.newXP,
+          level: result.newLevel,
+          avatarStage: result.newStage.stage,
+        },
+        stats: {
+          ...prev.stats,
+          weeklyGoalsCompleted: newWeeklyGoalsCompleted,
+          totalXP: prev.stats.totalXP + xpReward,
+          totalCO2Saved: prev.stats.totalCO2Saved + Math.round(xpReward),
+        },
+      };
+
+      // Check for milestone (every 3 goals completed)
+      if (newWeeklyGoalsCompleted % 3 === 0) {
+        const roadmap = generateCarbonRoadmap(
+          prev.profile.carbonScore,
+          prev.profile.potentialScore,
+          prev.profile.level
+        );
+        const milestone = roadmap.find(m => m.level === prev.profile.level);
+        if (milestone) {
+          setMilestoneModal({
+            isOpen: true,
+            milestoneLevel: milestone.level,
+            co2Reduction: milestone.estimatedCO2ReductionKg,
+          });
+        }
+      }
+
+      saveDashboardState(newState);
+      return newState;
+    });
+  }, []);
+
   const currentStage = getAvatarStageForLevel(state.profile.level);
+
+  // Prepare behavior change context for AI
+  const roadmap = generateCarbonRoadmap(
+    state.profile.carbonScore,
+    state.profile.potentialScore,
+    state.profile.level
+  );
+  const weeklyGoals = generateWeeklyEcoGoals(report, state);
+  const annualProjection = projectAnnualImpact(
+    state.profile.carbonScore,
+    state.profile.potentialScore,
+    state.stats.missionsCompleted
+  );
+  const recommendations = getBehaviorChangeRecommendations(report, state);
+
+  const behaviorChangeContext = {
+    currentMilestone: roadmap[0] ? `Level ${roadmap[0].level} - ${roadmap[0].timeframe}` : 'Not started',
+    weeklyGoals: weeklyGoals.map(g => g.title),
+    annualProjection: `${annualProjection.annualReductionKg} kg CO₂/year`,
+    recommendations: recommendations,
+  };
 
   return (
     <div className="relative min-h-screen bg-brand-bg transition-colors duration-300">
@@ -137,12 +216,58 @@ export default function Dashboard({
         />
       )}
 
+      {/* Milestone Celebration Modal */}
+      {milestoneModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setMilestoneModal(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: 'spring', damping: 20 }}
+            className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-primary/10 flex items-center justify-center">
+                <Target className="w-8 h-8 text-brand-primary" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-800 mb-2">Milestone Reached!</h3>
+              <p className="text-slate-600 mb-4">You've completed 3 weekly eco goals at Level {milestoneModal.milestoneLevel}</p>
+              <div className="bg-brand-primary/5 rounded-xl p-4 mb-4">
+                <p className="text-3xl font-bold text-brand-primary mb-1">-{milestoneModal.co2Reduction} kg</p>
+                <p className="text-sm text-slate-600">Estimated CO₂ Reduction</p>
+              </div>
+              <button
+                onClick={() => setMilestoneModal(null)}
+                className="w-full py-3 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-dark transition-colors"
+              >
+                Continue Journey
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-10 -right-40 w-96 h-96 rounded-full bg-brand-primary/6 filter blur-3xl" />
         <div className="absolute bottom-20 -left-40 w-80 h-80 rounded-full bg-brand-accent/4 filter blur-3xl" />
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-brand-primary/5 filter blur-3xl opacity-60" />
       </div>
+
+      {/* EcoCoach Widget */}
+      <EcoCoachWidget
+        score={state.profile.carbonScore}
+        level={state.profile.level}
+        stage={state.profile.avatarStage}
+        behaviorChangeContext={behaviorChangeContext}
+      />
 
       {/* Dashboard Container */}
       <div className="relative max-w-5xl mx-auto px-4 md:px-8 py-7 md:py-8">
@@ -246,11 +371,20 @@ export default function Dashboard({
             />
           </motion.div>
 
+          {/* Section 3.5: Behavior Change Insights */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.27 }}
+          >
+            <BehaviorChangeInsights report={report} state={state} onWeeklyGoalComplete={handleWeeklyGoalComplete} />
+          </motion.div>
+
           {/* Section 4: Carbon Analytics / Progress Tracker */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.33 }}
           >
             <ProgressTracker stats={state.stats} />
           </motion.div>
@@ -259,7 +393,7 @@ export default function Dashboard({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.36 }}
+            transition={{ duration: 0.6, delay: 0.39 }}
           >
             <FutureEarthSimulator totalCO2Saved={state.stats.totalCO2Saved} />
           </motion.div>
@@ -268,7 +402,7 @@ export default function Dashboard({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.42 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
           >
             <AchievementPreview achievements={state.achievements} />
           </motion.div>
@@ -277,7 +411,7 @@ export default function Dashboard({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.48 }}
+            transition={{ duration: 0.6, delay: 0.51 }}
           >
             <EcoTwinJourneyTimeline currentLevel={state.profile.level} />
           </motion.div>
